@@ -1,0 +1,29 @@
+# docker-compose.yml
+
+version: '3.5'
+services:
+  flask:
+    networks:
+      - mynet
+    image: webapp-flask
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-flask
+    volumes:
+      - "./:/app"
+
+  nginx:
+    networks:
+      - mynet
+    image: webapp-nginx
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-nginx
+    ports:
+      - 5000:80
+    depends_on:
+      - flask
+
+networks:
+  mynet:
+    driver: bridge

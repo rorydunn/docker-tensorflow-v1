@@ -1,0 +1,58 @@
+# Dockerfile-flask
+
+# We simply inherit the Python 3 image. This image does
+# not particularly care what OS runs underneath
+FROM continuumio/anaconda3 as RELEASE
+RUN apt-get update
+RUN apt-get install psmisc
+COPY conda-requirements.txt .
+RUN conda create -n crec --file conda-requirements.txt
+RUN conda config --append channels conda-forge
+#RUN conda install -c auto flask-api
+RUN conda install libiconv
+RUN conda install -c conda-forge uwsgi
+RUN conda create -n tf tensorflow
+RUN conda install -c anaconda numpy
+RUN conda install -c conda-forge matplotlib
+#RUN conda install -c dsdale24 pyqt5
+#RUN conda install -c anaconda redis
+
+#FROM python:3 as RELEASE
+
+# Set an environment variable with the directory
+# where we'll be running the app
+ENV APP /app
+ENV WERKZEUG_DEBUG_PIN off
+
+# Create the directory and instruct Docker to operate
+# from there from now on
+RUN mkdir $APP
+WORKDIR $APP
+
+# Expose the port uWSGI will listen on
+EXPOSE 5000
+
+# Copy the requirements file in order to install
+# Python dependencies
+RUN python -m pip install --upgrade pip
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+#RUN pip install Flask-API
+#RUN pip install -U scikit-learn
+#RUN pip install pandas
+RUN pip install redis
+RUN pip install tensorflow==1.14
+RUN pip install tensorflow-hub==0.6.0
+RUN pip install -q seaborn
+#RUN pip install Werkzeug
+
+# Install Python dependencies
+#RUN pip install gunicorn flask
+
+# We copy the rest of the codebase into the image
+COPY . .
+
+# Finally, we run uWSGI with the ini file we
+# created earlier
+CMD [ "uwsgi", "--ini", "app.ini" ]
+#RUN uwsgi --ini app.ini
